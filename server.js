@@ -11,8 +11,7 @@ const connection = mysql.createConnection({
     database: "ep_track"
 });
 
-connection.connect(function (err) {
-    if (err) throw err;
+connection.connect(function () {
     start()
 });
 
@@ -30,12 +29,7 @@ const start = () => {
                 "Add Department",
                 "Add Role",
                 "Update Role",
-                "Update Managers",
-                "View Employee by Manager",
                 "Remove Employee",
-                "Remove Role",
-                "Remove Dept",
-                "View Budget by Department",
                 "Exit",
             ]
         }).then(function (data) {
@@ -61,23 +55,8 @@ const start = () => {
                 case "Update Role":
                     updateRole();
                     break;
-                case "Update Managers":
-                    updateMang();
-                    break;
-                case "View Employee by Manager":
-                    empByMgr();
-                    break;
                 case "Remove Employee":
                     removeEmp();
-                    break;
-                case "Remove Role":
-                    removeRole();
-                    break;
-                case "Remove Dept":
-                    removeDept();
-                    break;
-                case "View Budget by Department":
-                    viewBudget();
                     break;
                 case "Exit":
                     exit();
@@ -112,44 +91,167 @@ const viewRoles = function () {
 // Add employee
 
 const addEmployee = function () {
-    connection.query("SELECT * FROM role", function (data) {
-        inquirer.prompt([
-            {
-                name: "first_name",
-                type: "input",
-                message: "Please enter the new employee's first name."
-            },
-            {
-                name: "last_name",
-                type: "input",
-                message: "Please enter the new employee's last name."
-            },
-            {
-                name: "role",
-                type: "list",
-                choices: function () {
-                    var roles = [];
-                    for (var i = 0; i < data.length; i++) {
-                        roles.push(data[i].title);
-                    } return roles;
-                },
-                message: "Please enter the new employee's role."
-            },
-        ]).then(response) {
-            console.log(response);
-            var roleNum = "";
-            for (var i = 0; i < response.length; i++) {
-                if (response[i].title === answer.role) {
-                    roleNum = response[i].id
-                }
-            } connection.query("INSERT INTO employee SET ?",
+    connection.query("SELECT * FROM role", function (err, data) {
+        inquirer
+            .prompt([
                 {
-                    first_name: response.first_name,
-                    last_name: response.last_name,
-                    role_id: roleNum
-                }, {
+                    name: "first_name",
+                    type: "input",
+                    message: "Please enter the new employee's first name."
+                },
+                {
+                    name: "last_name",
+                    type: "input",
+                    message: "Please enter the new employee's last name."
+                },
+                {
+                    name: "role",
+                    type: "list",
+                    choices: function () {
+                        var roles = [];
+                        for (var i = 0; i < data.length; i++) {
+                            roles.push(data[i].title);
+                        } return roles;
+                    },
+                    message: "Please enter the new employee's role."
+                },
+            ]).then(function (response) {
+                console.log(response);
+                var roleNum = "";
+                for (var i = 0; i < response.length; i++) {
+                    if (response[i].title === response.role) {
+                        roleNum = response[i].id
+                    }
+                } connection.query("INSERT INTO employee SET ?",
+                    {
+                        first_name: response.first_name,
+                        last_name: response.last_name,
+                        role_id: roleNum
+                    },
+                    {
+                        function() {
+                            start();
+                        }
+                    });
+            }
+            );
+    });
+}
+
+const addDept = function () {
+    inquirer
+        .prompt([
+            {
+                name: "new_dept",
+                type: "input",
+                message: "please enter the department you would like to add."
+            }
+        ]).then(function (response) {
+            connection.query(
+                "INSERT INTO department SET ?",
+                {
+                    name: response.new_dept
+                }
+            );
+            start();
+
+        })
+};
+
+const addRole = function () {
+    connection.query("SELECT * FROM department", function (err, data) {
+        console.log(data);
+        inquirer
+            .prompt([
+                {
+                    name: "role",
+                    type: "input",
+                    message: "Please enter the role you would like to add."
+                },
+                {
+                    name: "salary",
+                    type: "input",
+                    message: "Please enter the salary of this role."
+                },
+                {
+                    name: "department_id",
+                    type: "list",
+                    choices: function () {
+                        var roles = [];
+                        for (var i = 0; i < data.length; i++) {
+                            roles.push(data[i].id + ". " + data[i].name);
+                        } return roles;
+                    },
+                    message: "Please select the department this role belongs to."
+                }
+            ]).then(function (response) {
+                console.log(response);
+                connection.query(
+                    "INSERT INTO role SET ?",
+                    {
+                        title: response.role,
+                        salary: response.salary,
+                        department_id: (response.department_id).slice(0, 1),
+                    }, function (err, data) {
+                        if (err)
+                            console.log(err);
+                        else
+                            console.log(response);
+                    }
+                );
                 start();
-            });
-        }
+
+            })
     })
+};
+
+const updateRole = function () {
+    connection.query("SELECT * FROM role", function (err, data) {
+        console.log(data);
+        inquirer
+            .prompt([
+                {
+                    name: "roleChoice",
+                    type: "list",
+                    choices: function () {
+                        var roles = [];
+                        for (var i = 0; i < data.length; i++) {
+                            roles.push(data[i].id + ". Role: " + data[i].title + " - Salary: " + data[i].salary + " - Department ID: " + data[i].department_id);
+                        } return roles;
+                    },
+                    message: "Please select the role you want to edit"
+                }
+            ]).then(function (response) {
+                console.log(response);
+                connection.query(
+                    "UPDATE role SET ? WHERE ?",
+                    [
+                        {
+                            title: response.role,
+                            salary: response.salary,
+                            department_id: response.department_id
+                        },
+                        {
+                            id: (response.roleChoice).slice(0, 1),
+                        }
+                    ]
+                    , function (err, data) {
+                        if (err)
+                            console.log(err);
+                        else
+                            console.log(data);
+                    }
+                );
+                start();
+
+            })
+    })
+};
+
+const removeEmp = function () {
+
+};
+
+const exit = function () {
+    connection.end;
 }
