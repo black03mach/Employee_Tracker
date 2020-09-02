@@ -127,11 +127,11 @@ const addEmployee = function () {
                         last_name: response.last_name,
                         role_id: roleNum
                     },
-                    
-                        function() {
-                            start();
-                        }
-                    );
+
+                    function () {
+                        start();
+                    }
+                );
             }
             );
     });
