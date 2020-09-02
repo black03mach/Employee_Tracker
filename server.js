@@ -66,7 +66,7 @@ const start = () => {
 
 // View all employees:
 const viewAll = function () {
-    connection.query("SELECT * FROM employee", function (data) {
+    connection.query("SELECT * FROM employee", function (err, data) {
         console.table(data);
         start();
     })
@@ -74,14 +74,14 @@ const viewAll = function () {
 
 // View all departments
 const viewDept = function () {
-    connection.query("SELECT * FROM department", function (data) {
+    connection.query("SELECT * FROM department", function (err, data) {
         console.table(data);
         start();
     })
 };
 // View all roles
 const viewRoles = function () {
-    connection.query("SELECT * FROM role", function (data) {
+    connection.query("SELECT * FROM role", function (err, data) {
         console.table(data);
         start();
     })
@@ -127,11 +127,11 @@ const addEmployee = function () {
                         last_name: response.last_name,
                         role_id: roleNum
                     },
-                    {
+                    
                         function() {
                             start();
                         }
-                    });
+                    );
             }
             );
     });
