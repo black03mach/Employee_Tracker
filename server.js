@@ -1,7 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql");
 const table = require("console.table");
-const PasswordPrompt = require("inquirer/lib/prompts/password");
 
 const connection = mysql.createConnection({
     host: "localhost",
@@ -220,9 +219,23 @@ const updateRole = function () {
                         } return roles;
                     },
                     message: "Please select the role you want to edit"
+                },
+                {
+                    name: "role",
+                    type: "input",
+                    message: "What are you changing this title to?"
+                },
+                {
+                    name: "salary",
+                    type: "input",
+                    message: "What is the new salary of this role?"
+                },
+                {
+                    name: "department_id",
+                    type: "input",
+                    message: "what is the new department ID of this role?"
                 }
             ]).then(function (response) {
-                console.log(response);
                 connection.query(
                     "UPDATE role SET ? WHERE ?",
                     [
@@ -249,7 +262,34 @@ const updateRole = function () {
 };
 
 const removeEmp = function () {
-
+    let employees = [];
+    connection.query("SELECT first_name FROM employee", function (req, res) {
+        // console.log(res);
+        for (i = 0; i < res.length; i++) {
+            employees.push(res[i].first_name);
+        }
+        // console.log(employees);
+        inquirer
+            .prompt([{
+                name: "xEmp",
+                type: "list",
+                message: "Choose which employee to terminate.",
+                choices: employees
+            }
+            ]).then(data => {
+                console.log(data.xEmp);
+                connection.query("DELETE FROM employee WHERE ?",
+                    {
+                        first_name: data.xEmp
+                    }, function (err, data) {
+                        if (err)
+                            console.log(err);
+                        else
+                            console.log(data);
+                    })
+                start();
+            });
+    })
 };
 
 const exit = function () {
